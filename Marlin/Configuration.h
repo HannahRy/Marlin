@@ -1,10 +1,12 @@
-#define ABL_BLTOUCH // Replaces RGB LED
-#define GraphicalLCD // Will work next to MKS TFT
-#define TMC_2209 // Defaults to TMC2100
+//#define ABL_BLTOUCH // Replaces RGB LED
+//#define BLTOUCH_ZPROPEPIN //use the ZMAX PIN for the bltouch, defaults to replacing the ZMIN
+//#define GraphicalLCD // Will work next to MKS TFT
+//#define TMC_2209 // Defaults to TMC2100
 //#define ABL_UBL // Defaults to Bilinear
 //#define RunoutSensor // Tinymachines Lerdge Sensor
-#define RELOCATE_LED // Since the bltouch by default removed the LED, set this if you simply moved them off the hotend
+//#define RELOCATE_LED // Since the bltouch by default removed the LED, set this if you simply moved them off the hotend
 //#define E3DHermeaExtruder
+//#define SKR13 //SKR 1.3 motherboard
 
 /**
  * Marlin 3D Printer Firmware
@@ -112,7 +114,12 @@
  *
  * :[-1, 0, 1, 2, 3, 4, 5, 6, 7]
  */
-#define SERIAL_PORT 0
+
+#if ENABLED(SKR13)
+  #define SERIAL_PORT -1
+#else
+  #define SERIAL_PORT 0
+#endif
 
 /**
  * Select a secondary serial port on the board to use for communication with the host.
@@ -121,7 +128,9 @@
  *
  * :[-1, 0, 1, 2, 3, 4, 5, 6, 7]
  */
-//#define SERIAL_PORT_2 -1
+#if ENABLED(SKR13)
+  #define SERIAL_PORT_2 0
+#endif
 
 /**
  * This setting determines the communication speed of the printer.
@@ -139,7 +148,12 @@
 
 // Choose the name from boards.h that matches your setup
 #ifndef MOTHERBOARD
-  #define MOTHERBOARD BOARD_MKS_GEN_L
+  #if ENABLED(SKR13)
+    #define MOTHERBOARD BOARD_BIGTREE_SKR_V1_3
+  #else
+    #define MOTHERBOARD BOARD_MKS_GEN_L
+  #endif
+ 
 #endif
 
 // Name displayed in the LCD "Ready" message and Info menu
@@ -156,7 +170,7 @@
 #define EXTRUDERS 1
 
 // Generally expected filament diameter (1.75, 2.85, 3.0, ...). Used for Volumetric, Filament Width Sensor, etc.
-#define DEFAULT_NOMINAL_FILAMENT_DIA 3.0
+#define DEFAULT_NOMINAL_FILAMENT_DIA 1.75
 
 // For Cyclops or any "multi-extruder" that shares a single nozzle.
 //#define SINGLENOZZLE
@@ -658,7 +672,7 @@
 // Mechanical endstop with COM to ground and NC to Signal uses "false" here (most common setup).
 #define X_MIN_ENDSTOP_INVERTING true // Set to true to invert the logic of the endstop.
 #define Y_MIN_ENDSTOP_INVERTING true // Set to true to invert the logic of the endstop.
-#if ENABLED(ABL_BLTOUCH)
+#if ENABLED(ABL_BLTOUCH) && DISABLED(BLTOUCH_ZPROPEPIN)
   #define Z_MIN_ENDSTOP_INVERTING false // Set to true to invert the logic of the endstop.
 #else
   #define Z_MIN_ENDSTOP_INVERTING true // Set to true to invert the logic of the endstop.
@@ -854,8 +868,9 @@
  *
  * Enable this option for a probe connected to the Z Min endstop pin.
  */
-#define Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN
-
+#if DISABLED(BLTOUCH_ZPROPEPIN)
+  #define Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN
+#endif
 /**
  * Z_MIN_PROBE_PIN
  *
@@ -968,8 +983,11 @@
  *
  * Specify a Probe position as { X, Y, Z }
  */
-#define NOZZLE_TO_PROBE_OFFSET { 28, -33, 0 }
-
+#if ENABLED(E3DHermeaExtruder)
+  #define NOZZLE_TO_PROBE_OFFSET { 60, -40, 0 }
+#else
+  #define NOZZLE_TO_PROBE_OFFSET { 28, -33, 0 }
+#endif
 // Most probes should stay away from the edges of the bed, but
 // with NOZZLE_AS_PROBE this can be negative for a wider probing area.
 #define MIN_PROBE_EDGE 5
@@ -1395,7 +1413,9 @@
 // - Move the Z probe (or nozzle) to a defined XY point before Z Homing when homing all axes (G28).
 // - Prevent Z homing when the Z probe is outside bed area.
 //
-#define Z_SAFE_HOMING
+#if ENABLED(ABL_BLTOUCH) && DISABLED(BLTOUCH_ZPROPEPIN)
+  #define Z_SAFE_HOMING
+#endif
 
 #if ENABLED(Z_SAFE_HOMING)
   #define Z_SAFE_HOMING_X_POINT (50)    // X point for Z homing when homing all axes (G28).
@@ -2240,10 +2260,17 @@
 //#define RGBW_LED
 
 #if EITHER(RGB_LED, RGBW_LED)
-  #define RGB_LED_R_PIN 5
-  #define RGB_LED_G_PIN 4
-  #define RGB_LED_B_PIN 6
-  #define RGB_LED_W_PIN -1
+  #if ENABLED(SKR13)
+    #define RGB_LED_R_PIN 1_21
+    #define RGB_LED_G_PIN 1_22
+    #define RGB_LED_B_PIN 1_23
+    #define RGB_LED_W_PIN -1
+  #else
+    #define RGB_LED_R_PIN 5
+    #define RGB_LED_G_PIN 4
+    #define RGB_LED_B_PIN 6
+    #define RGB_LED_W_PIN -1
+  #endif
 #endif
 
 // Support for Adafruit Neopixel LED driver
